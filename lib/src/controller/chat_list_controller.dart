@@ -68,8 +68,6 @@ base class ChatViewListController {
 
   final bool _disposeOtherResources;
 
-  bool get disposeOtherResources => _disposeOtherResources;
-
   bool get isSearching => _searchResultMap != null;
 
   /// Stream controller to manage the chat list stream.
@@ -109,29 +107,22 @@ base class ChatViewListController {
   /// If the chat with [chatId] does not exist, the method returns without
   /// making changes.
   void updateChat(String chatId, UpdateChatCallback newChat) {
-    if (_searchResultMap != null) {
-      final searchChat = _searchResultMap?[chatId];
-      if (searchChat == null) {
-        final chat = chatListMap[chatId];
-        if (chat == null) return;
-        chatListMap[chatId] = newChat(chat);
-        return;
-      }
-
+    var isSearchUpdated = false;
+    if (_searchResultMap?[chatId] case final searchChat?) {
       final updatedChat = newChat(searchChat);
       _searchResultMap?[chatId] = updatedChat;
-      chatListMap[chatId] = updatedChat;
-      if (_chatListStreamController.isClosed) return;
-      _chatListStreamController.add(_searchResultMap ?? chatListMap);
-      return;
+      isSearchUpdated = true;
     }
 
     final chat = chatListMap[chatId];
-    if (chat == null) return;
+    if (!isSearchUpdated && chat == null) return;
 
-    chatListMap[chatId] = newChat(chat);
+    if (chat != null) {
+      chatListMap[chatId] = _searchResultMap?[chatId] ?? newChat(chat);
+    }
+
     if (_chatListStreamController.isClosed) return;
-    _chatListStreamController.add(chatListMap);
+    _chatListStreamController.add(_searchResultMap ?? chatListMap);
   }
 
   /// Removes the chat with the given [chatId] from the chat list.
@@ -139,16 +130,13 @@ base class ChatViewListController {
   /// If the chat with [chatId] does not exist, the method returns without
   /// making changes.
   void removeChat(String chatId) {
+    _searchResultMap?.remove(chatId);
     if (!chatListMap.containsKey(chatId)) return;
     chatListMap.remove(chatId);
-
-    if (_searchResultMap?.containsKey(chatId) ?? false) {
-      _searchResultMap?.remove(chatId);
-    }
+    _animatedListController.removeItem(chatId);
 
     if (_chatListStreamController.isClosed) return;
-    _animatedListController.removeItem(chatId);
-    _chatListStreamController.add(chatListMap);
+    _chatListStreamController.add(_searchResultMap ?? chatListMap);
   }
 
   /// Adds the given chat search results to the stream after the current frame.
