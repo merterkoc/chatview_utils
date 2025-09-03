@@ -1,7 +1,7 @@
 name: chatview_utils
 description: Utility library for the chatview and chatview_connect libraries, containing shared type declarations. It should not be used directly.
 version: 0.0.2
-repository: https://github.com/SimformSolutionsPvtLtd/chatview_utils
+repository: https://github.com/merterkoc/chatview_utils
 issue_tracker: https://github.com/SimformSolutionsPvtLtd/chatview_utils/issues
 
 environment:
